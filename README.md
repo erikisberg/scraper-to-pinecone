@@ -3,16 +3,13 @@
 ## Overview
 The project consists of these main components:
 
-_scraper.py:_ Scrapes articles from the ImpactLoop website, capturing both the content and metadata of each article.
+- `scraper.py`: This script scrapes articles from the ImpactLoop website, capturing both the content and metadata of each article.
+    - Folder: `websites`
 
-- Folder: websites
+- `chunker.py`: This script processes the scraped HTML content, divides it into manageable chunks, and includes metadata for better context.
+    - JSON: `chunks_with_metadata.json`
+    - JSON: `processed_files.json`
 
-_chunker.py:_ Processes the scraped HTML content, divides it into manageable chunks, and includes metadata for better context.
+- `vectorizor.py`: This script is used to create embeddings for a given dataset and index them using Pinecone.
 
-- JSON - chuncks_with_metadata
-- JSON - processed_files.json
-
-_vectorizer.py:_  The `vectorizor.py` script is used to create embeddings for a given dataset and index them using Pinecone.
-
-
-_query.py:_ 
+- `query.py`: This script is used to generate a query vector for a given text, query Pinecone with the vector, and then use the results to construct a prompt for the GPT model.
