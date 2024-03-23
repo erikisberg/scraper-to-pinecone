@@ -1,0 +1,9 @@
+beautifulsoup4==4.12.3
+jsonlines==4.0.0
+langchain_text_splitters==0.0.1
+numpy==1.26.4
+openai==1.14.2
+pinecone==0.1.0
+python-dotenv==1.0.1
+Requests==2.31.0
+tiktoken==0.6.0
