@@ -3,15 +3,16 @@
 ## Overview
 The project consists of these main components:
 
-scraper.py: Scrapes articles from the ImpactLoop website, capturing both the content and metadata of each article.
+_scraper.py:_ Scrapes articles from the ImpactLoop website, capturing both the content and metadata of each article.
 
 - Folder: websites
 
-chunker.py: Processes the scraped HTML content, divides it into manageable chunks, and includes metadata for better context.
+_chunker.py:_ Processes the scraped HTML content, divides it into manageable chunks, and includes metadata for better context.
 
 - JSON - chuncks_with_metadata
 - JSON - processed_files.json
 
-vectorizer.py: 
+_vectorizer.py:_  The `vectorizor.py` script is used to create embeddings for a given dataset and index them using Pinecone.
 
-query.py: 
+
+_query.py:_ 
