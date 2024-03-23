@@ -1,6 +1,8 @@
 import requests
 from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
+import os
+import json
 
 def is_internal_link(base_url, link):
     """Check if the link is an internal link."""
@@ -10,7 +12,6 @@ def get_all_links(url, base_url):
     """Return all unique internal links found on a webpage."""
     internal_links = set()
     response = requests.get(url)
-    print(response.headers['Content-Type'])
     if response.status_code == 200:
         soup = BeautifulSoup(response.text, 'html.parser')
         
@@ -30,52 +31,62 @@ def filter_elements(soup, unwanted_classes):
         for tag in soup.find_all(class_=class_name):
             tag.decompose()
 
-def scrape_site_content(base_url, limit=10):
+def sanitize_url(url):
+    """Remove or replace characters in a URL that are not valid in filenames."""
+    return url.replace('http://', '').replace('https://', '').replace('/', '_').replace(':', '_')
+
+def extract_metadata(soup, current_page_url):
+    """Extract metadata from a BeautifulSoup object."""
+    title = soup.find('title').text if soup.find('title') else None
+    author = soup.find(id="author").text if soup.find(id="author") else None
+    publish_date = soup.find(id="publish-date").text if soup.find(id="publish-date") else None
+    tags = [tag.text for tag in soup.find_all(id="tag")]
+    url = current_page_url
+
+    metadata = {
+        'title': title,
+        'author': author,
+        'publish_date': publish_date,
+        'tags': tags,
+        'url': url
+    }
+    return metadata
+
+def scrape_site_content(base_url, limit=5):
     """Scrape all text from a site starting with the base URL."""
     print(f"Starting to scrape {base_url} with limit {limit}")
     session = requests.Session()  # Using a session for efficiency
     to_visit = set([base_url])
     visited = set()
-    site_content = {}
     page_count = 0
+
+    # Create the directory to store the JSON files if it doesn't exist
+    if not os.path.exists('websites'):
+        os.makedirs('websites')
 
     while to_visit and page_count < limit:
         current_page = to_visit.pop()
         visited.add(current_page)
-        response = session.get(current_page)
-        if response.status_code == 200:
-            soup = BeautifulSoup(response.content, 'html.parser')
-            charset_meta = soup.find('meta', charset=True)
-            if charset_meta:
-                response.encoding = charset_meta['charset']
-            filter_elements(soup, ['navbar', 'footer', 'payment-wall', 'h1-alternative', 'h3-alternative'])
-            page_text = [tag.get_text(strip=True) for tag in soup.find_all(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'a'])]
-            site_content[current_page] = page_text
-            # ...
-            internal_links = get_all_links(current_page, base_url)
-            to_visit.update(internal_links - visited)
-            page_count += 1
+        filepath = os.path.join('websites', sanitize_url(current_page) + '.json')
+        if os.path.exists(filepath):
+            print(f"Skipping {current_page} because JSON file already exists")
         else:
-            print(f"Failed to retrieve {current_page}")
-    return site_content
-
-def save_as_html(file, url, content):
-    """Write the scraped content to an HTML file without HTML tags."""
-    print(f"Saving content from {url}")
-    file.write(f"{url}\n")
-    for paragraph in content:
-        file.write(paragraph + "\n")
+            response = session.get(current_page)
+            if response.status_code == 200:
+                soup = BeautifulSoup(response.content, 'html.parser')
+                filter_elements(soup, ['navbar', 'footer', 'payment-wall', 'h1-alternative', 'h3-alternative', 'img', 'payment-wall'])
+                # Extract metadata
+                metadata = extract_metadata(soup, current_page)
+                # Save the text content and metadata to a JSON file
+                with open(filepath, 'w', encoding='utf-8') as f:
+                    json.dump({'metadata': metadata, 'content': soup.text}, f, ensure_ascii=False, indent=4)
+                page_count += 1  # Only increment the page count if a new page was scraped
+            else:
+                print(f"Failed to retrieve {current_page}")
+        internal_links = get_all_links(current_page, base_url)
+        to_visit.update(internal_links - visited)
 
 base_url = "https://impactloop.se/"
-site_content = scrape_site_content(base_url)
-
-filename = "scraped_content.html"
-with open(filename, "w", encoding="utf-8") as file:
-    for url, content in site_content.items():
-        save_as_html(file, url, content)
+scrape_site_content(base_url)
 
 print("Finished scraping")
-# Example to print the content from each page (you might want to save this instead)
-for url, content in site_content.items():
-    print(f"URL: {url}")
-    print("Content:", content[:5], "\n...")  # Printing first 5 elements for brevity
