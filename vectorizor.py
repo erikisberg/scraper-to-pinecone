@@ -1,64 +1,93 @@
 import jsonlines
 import openai
-import pinecone
 import os
 from dotenv import load_dotenv
+from pinecone import Pinecone
 
 # Load environment variables from .env file
 load_dotenv()
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
-INDEX_NAME = os.getenv("INDEX_NAME", "your_default_index_name") # Default index name if not set in .env
-PINECONE_ENVIRONMENT = os.getenv("PINECONE_ENVIRONMENT", "us-west1-gcp") # Default environment if not set in .env
+INDEX_NAME = os.getenv("INDEX_NAME")
 
-# Load train.jsonl file
+# Initialize Pinecone client
+pinecone_client = Pinecone(api_key=PINECONE_API_KEY)
+
+# Access the index
+index = pinecone_client.Index(name=INDEX_NAME)
+
+def preprocess_metadata(metadata):
+    """
+    Preprocess metadata to replace null values with an appropriate placeholder.
+    This ensures all metadata values are compatible with Pinecone's requirements.
+    """
+    for key, value in metadata.items():
+        if value is None:
+            metadata[key] = "unknown"  # Replace None with "unknown" or another placeholder
+        elif isinstance(value, list) and not value:
+            metadata[key] = ["unknown"]  # Replace empty lists with a list containing a placeholder
+    return metadata
+
 def load_data(file_path):
+    """
+    Load data from a JSON lines file.
+    """
     data = []
     with jsonlines.open(file_path) as f:
         for item in f:
+            # Preprocess metadata for each item
+            item["metadata"] = preprocess_metadata(item.get("metadata", {}))
             data.append(item)
     return data
 
-# Initialize OpenAI API
 def init_openai(api_key):
+    """
+    Initialize OpenAI API.
+    """
     openai.api_key = api_key
     return "text-embedding-ada-002"
 
-# Initialize Pinecone index
-def init_pinecone(api_key, index_name, dimension):
-    pinecone.init(api_key=api_key, environment=PINECONE_ENVIRONMENT)
-    if index_name not in pinecone.list_indexes():
-        pinecone.create_index(index_name, dimension=dimension)
-    index = pinecone.Index(index_name)
-    return index
+import numpy as np
+import base64
 
-# Create embeddings and populate the index
-def create_and_index_embeddings(data, model, index):
+def create_and_index_embeddings(data, model):
+    """
+    Create embeddings and populate the Pinecone index.
+    """
     batch_size = 32
     for start_index in range(0, len(data), batch_size):
-        text_batch = [item["text"] for item in data[start_index:start_index + batch_size]]
-        ids_batch = [item["id"] for item in data[start_index:start_index + batch_size]]
+        batch = data[start_index:start_index + batch_size]
+        text_batch = [item["text"] for item in batch if item["text"].strip()]
+        ids_batch = [item["id"] for item in batch if item["text"].strip()]
+        metadata_batch = [item["metadata"] for item in batch if item["text"].strip()]
+        
+        if not text_batch:  # Skip if the batch is empty after filtering
+            continue
+        
         res = openai.Embedding.create(input=text_batch, engine=model)
         embeds = [record["embedding"] for record in res["data"]]
-        to_upsert = [
-            {"id": ids_batch[i], "values": embeds[i]} for i in range(len(embeds))
+        
+        # Prepare the data for upserting into Pinecone
+        vectors_to_upsert = [
+            {
+                "id": ids_batch[i],
+                "values": embeds[i],
+                "metadata": metadata_batch[i]
+            }
+            for i in range(len(embeds))
         ]
-        index.upsert(vectors=to_upsert)
+        
+        # Upsert the batch of vectors into Pinecone
+        index.upsert(vectors=vectors_to_upsert)
+
 
 if __name__ == "__main__":
-    # Load the data from train.jsonl
-    train_data = load_data("train.jsonl")
+    # Load the data from chunks_with_metadata.jsonl
+    train_data = load_data("chunks_with_metadata.jsonl")
 
-    # Initialize OpenAI Embedding API
+    # Initialize OpenAI Embedding API with your API key
     MODEL = init_openai(OPENAI_API_KEY)
 
-    # Get embeddings dimension
-    sample_embedding = openai.Embedding.create(input="sample text", engine=MODEL)["data"][0]["embedding"]
-    EMBEDDING_DIMENSION = len(sample_embedding)
-
-    # Initialize Pinecone index
-    chatgpt_index = init_pinecone(PINECONE_API_KEY, INDEX_NAME, EMBEDDING_DIMENSION)
-
     # Create embeddings and populate the index with the train data
-    create_and_index_embeddings(train_data, MODEL, chatgpt_index)
+    create_and_index_embeddings(train_data, MODEL)

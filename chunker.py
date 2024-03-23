@@ -14,7 +14,10 @@ def load_processed_files_list(filename='processed_files.json'):
     """Load the list of processed files."""
     if os.path.exists(filename):
         with open(filename, 'r', encoding='utf-8') as file:
-            return json.load(file)
+            try:
+                return json.load(file)
+            except json.JSONDecodeError:
+                return []
     else:
         return []
 
