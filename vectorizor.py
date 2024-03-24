@@ -22,6 +22,9 @@ def preprocess_metadata(metadata):
     Preprocess metadata to replace null values with an appropriate placeholder.
     This ensures all metadata values are compatible with Pinecone's requirements.
     """
+    print("Before preprocessing: ", metadata)  # Print metadata before preprocessing
+
+
     for key, value in metadata.items():
         if value is None:
             metadata[key] = "unknown"  # Replace None with "unknown" or another placeholder
@@ -33,6 +36,9 @@ def load_data(file_path):
     """
     Load data from a JSON lines file.
     """
+
+    print(f"Loading data from {file_path}")  # Print the file path
+
     data = []
     with jsonlines.open(file_path) as f:
         for item in f:
@@ -45,7 +51,13 @@ def init_openai(api_key):
     """
     Initialize OpenAI API.
     """
+
+    print("Initializing OpenAI API with provided API key")  # Print a message before initialization
+
     openai.api_key = api_key
+
+    print("OpenAI API initialized successfully")  # Print a message after initialization
+
     return "text-embedding-ada-002"
 
 import numpy as np
