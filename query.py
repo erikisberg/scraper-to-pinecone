@@ -44,13 +44,12 @@ def query_pinecone(query_vector, top_k=5, include_values=False, include_metadata
 
 def construct_gpt_prompt(matches):
     """
-    Construct a prompt for GPT based on Pinecone query results.
+    Construct a prompt for GPT based on Pinecone query results without relying on document summaries.
     """
     prompt = "Ge ett svar baserat på följande dokumentuppgifter:\n\n"
     for match in matches:
         doc_id = match.get('id')
-        doc_summary = match.get('metadata', {}).get('summary', 'Document summary not available')
-        prompt += f"Document ID: {doc_id}, Summary: {doc_summary}\n\n"
+        prompt += f"Document ID: {doc_id}\n\n"
     prompt += "Answer:"
     return prompt
 
@@ -69,7 +68,7 @@ def query_gpt_with_context(prompt):
     return gpt_answer.strip()
 
 # Example usage
-query_text = "hur mycket fick cemvision in i sin investeringsrunda?"
+query_text = "Vad kan du berätta om bikupor?"
 query_vector = generate_query_vector(query_text)
 
 # Query Pinecone

@@ -12,7 +12,8 @@ PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 INDEX_NAME = os.getenv("INDEX_NAME")
 
 # Initialize Pinecone client
-pinecone_client = Pinecone(api_key=PINECONE_API_KEY)
+pc = Pinecone(api_key="YOUR_API_KEY")
+index = pc.Index("pinecone-index")
 
 # Access the index
 index = pinecone_client.Index(name=INDEX_NAME)
