@@ -52,7 +52,7 @@ def extract_metadata(soup, current_page_url):
     }
     return metadata
 
-def scrape_site_content(base_url, limit=10):
+def scrape_site_content(base_url, limit=100):
     """Scrape all text from a site starting with the base URL."""
     print(f"Starting to scrape {base_url} with limit {limit}")
     session = requests.Session()  # Using a session for efficiency

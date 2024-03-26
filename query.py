@@ -52,7 +52,7 @@ def construct_gpt_prompt(matches):
         text = match.get('metadata').get('text', 'Document text not available')
         prompt += f"Document ID: {doc_id}\n\n"
         prompt += f"Document Content: {text}\n\n"
-    prompt += "Answer:"
+    prompt += ""
     return prompt
 
 
@@ -64,7 +64,7 @@ def query_gpt_with_context(prompt):
     """
     chat_session_params = {
         "model": "gpt-4",  # Adjust the model as necessary
-        "messages": [{"role": "system", "content": "Du är onlinetidningen Impact Loops hjälpfulla assistent, med tillgång till deras artiklar och information. besvara frågan du får så gott du kan."},
+        "messages": [{"role": "system", "content": "Du är online-tidningen Impact Loops hjälpfulla AI-sökbot som hjälper sina läsare att hitta information baserat på de artiklar som de skriver. De som använder denna tjänst är seniora analytiker, investerare och entreprenörer inom impact/startup/scaleup/enterprise med focus på Impact. Allra först ska du skapa en övergripande sammanfattning för frågan som har ställts, med utförliga analys och insikt. Denna bör vara djupgående. Presentera statistik och data utförligt. Var hövlig och professionell i ditt språk. Svara på svenska skriv utförliga svar. Längst ner, lista alla artiklar du hänvisar till med länk"},
                      {"role": "user", "content": prompt}]
     }
     
@@ -73,7 +73,7 @@ def query_gpt_with_context(prompt):
     return gpt_answer.strip()
 
 # Example usage
-query_text = "Vad gör ALMI inom impact-sektorn?"
+query_text = "Baserat på infon från Impact Loop, vad ska jag tänka på inför en investering i ett bolag som säljer elektriska fordon?"
 query_vector = generate_query_vector(query_text)
 
 # Query Pinecone

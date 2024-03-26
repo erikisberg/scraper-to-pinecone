@@ -11,9 +11,10 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 INDEX_NAME = os.getenv("INDEX_NAME")
 
+print("PINECONE_API_KEY:", PINECONE_API_KEY)
+
 # Initialize Pinecone client
-pc = Pinecone(api_key="YOUR_API_KEY")
-index = pc.Index("pinecone-index")
+pinecone_client = Pinecone(api_key=PINECONE_API_KEY)
 
 # Access the index
 index = pinecone_client.Index(name=INDEX_NAME)
