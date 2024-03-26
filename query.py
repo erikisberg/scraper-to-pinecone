@@ -49,9 +49,14 @@ def construct_gpt_prompt(matches):
     prompt = "Ge ett svar baserat på följande dokumentuppgifter:\n\n"
     for match in matches:
         doc_id = match.get('id')
+        text = match.get('text')  # Get the document content
         prompt += f"Document ID: {doc_id}\n\n"
+        prompt += f"Document Content: {text}\n\n"  # Include the document content in the prompt
     prompt += "Answer:"
     return prompt
+
+
+
 
 def query_gpt_with_context(prompt):
     """
