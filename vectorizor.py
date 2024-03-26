@@ -39,8 +39,6 @@ def load_data(file_path):
     Load data from a JSON lines file.
     """
 
-    print(f"Loading data from {file_path}")  # Print the file path
-
     data = []
     with jsonlines.open(file_path) as f:
         for item in f:
