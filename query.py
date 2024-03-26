@@ -48,10 +48,10 @@ def construct_gpt_prompt(matches):
     """
     prompt = "Ge ett svar baserat på följande dokumentuppgifter:\n\n"
     for match in matches:
-        doc_id = match.get('id')
-        text = match.get('text')  # Get the document content
+        doc_id = match.get('id')  # Corrected here
+        text = match.get('metadata').get('text', 'Document text not available')
         prompt += f"Document ID: {doc_id}\n\n"
-        prompt += f"Document Content: {text}\n\n"  # Include the document content in the prompt
+        prompt += f"Document Content: {text}\n\n"
     prompt += "Answer:"
     return prompt
 
@@ -64,7 +64,7 @@ def query_gpt_with_context(prompt):
     """
     chat_session_params = {
         "model": "gpt-4",  # Adjust the model as necessary
-        "messages": [{"role": "system", "content": "Du är onlinetidningen Impact Loops hjälpfulla assistent, med tillgång till deras artiklar och information. "},
+        "messages": [{"role": "system", "content": "Du är onlinetidningen Impact Loops hjälpfulla assistent, med tillgång till deras artiklar och information. besvara frågan du får så gott du kan."},
                      {"role": "user", "content": prompt}]
     }
     
@@ -73,7 +73,7 @@ def query_gpt_with_context(prompt):
     return gpt_answer.strip()
 
 # Example usage
-query_text = "Vad kan du berätta om bikupor?"
+query_text = "Vad gör ALMI inom impact-sektorn?"
 query_vector = generate_query_vector(query_text)
 
 # Query Pinecone
